@@ -43,12 +43,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <string>
 #include "Hdf5DataWriter.hpp"
+#include "AbstractSolverLogger.hpp"
 //#include "AbstractCardiacProblem.hpp"
 /**
  * A plug-in class for on-the-fly output.  This is designed so that a user can insert something in
  * order to monitor the progress of a simulation or to produce "post processed" output during the simulation.
  */
-class AbstractOutputModifier
+class AbstractOutputModifier : public AbstractSolverLogger
 {
 private:
     /** For testing */

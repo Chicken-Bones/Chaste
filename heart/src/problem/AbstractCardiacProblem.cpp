@@ -399,6 +399,10 @@ void AbstractCardiacProblem<ELEMENT_DIM,SPACE_DIM,PROBLEM_DIM>::Solve()
 
     assert(mpSolver==NULL);
     mpSolver = CreateSolver(); // passes mpBoundaryConditionsContainer to solver
+    BOOST_FOREACH(boost::shared_ptr<AbstractOutputModifier> p_output_modifier, mOutputModifiers)
+    {
+        mpSolver->AddSolverLogger(p_output_modifier);
+    }
 
     // If we have already run a simulation, use the old solution as initial condition
     Vec initial_condition;

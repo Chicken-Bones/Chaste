@@ -41,6 +41,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TimeStepper.hpp"
 #include "AbstractLinearPdeSolver.hpp"
 #include "PdeSimulationTime.hpp"
+#include "AbstractSolverLogger.hpp"
 #include "AbstractTimeAdaptivityController.hpp"
 #include "Hdf5DataWriter.hpp"
 #include "Hdf5ToVtkConverter.hpp"
@@ -127,6 +128,11 @@ protected:
 
     /** List of variable column IDs as written to HDF5 file. */
     std::vector<int> mVariableColumnIds;
+
+    /**
+     * A vector of user-defined loggers which may be used to process the solution at each timestep
+     */
+    std::vector<boost::shared_ptr<AbstractSolverLogger> > mSolverLoggers;
 
     /**
      * Create and initialise the HDF5 writer.
@@ -217,6 +223,16 @@ public:
      * of timesteps at which results are output to HDF5 and other files.
      */
     void SetPrintingTimestepMultiple(unsigned multiple);
+
+    /**
+     * Add a solver logger onto a list of such objects.  These will be processed in the order in which they have been given.
+     * The logger should not be destroyed before the solve loop has completed
+     * @param pSolverLogger  Pointer to the logger to be added
+     */
+    void AddSolverLogger( boost::shared_ptr<AbstractSolverLogger> pSolverLogger)
+    {
+        mSolverLoggers.push_back(pSolverLogger);
+    }
 };
 
 template<unsigned ELEMENT_DIM, unsigned SPACE_DIM, unsigned PROBLEM_DIM>
@@ -460,6 +476,10 @@ Vec AbstractDynamicLinearPdeSolver<ELEMENT_DIM, SPACE_DIM, PROBLEM_DIM>::Solve()
         }
         solution = next_solution;
 
+        BOOST_FOREACH(boost::shared_ptr<AbstractSolverLogger> p_logger, mSolverLoggers)
+        {
+            p_logger->ProcessPdeSolutionAtTimeStep(stepper.GetTime(), solution, PROBLEM_DIM);
+        }
         // If required, output next solution to HDF5 file
         if (print_output && (stepper.GetTotalTimeStepsTaken()%mPrintingTimestepMultiple == 0) )
         {
